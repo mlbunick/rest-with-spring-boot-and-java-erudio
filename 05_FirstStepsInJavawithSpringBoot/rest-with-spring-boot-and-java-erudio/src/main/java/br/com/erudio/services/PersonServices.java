@@ -5,57 +5,56 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import br.com.erudio.exceptions.ResourceNotFoundException;
 import br.com.erudio.model.Person;
+import br.com.erudio.repositories.PersonRepository;
 
 @Service
 public class PersonServices {
 	
-	private static final AtomicLong counter = new AtomicLong();
 	private Logger logger = Logger.getLogger(PersonServices.class.getName());
+	
+	@Autowired
+	PersonRepository repository;
 	
 	public List<Person> findAll() {
 		
-		List<Person> persons = new ArrayList<>();
-		for (int i = 0; i < 8; i++) {
-			Person person = mockPerson(i);
-			persons.add(person);
-		}
-		return persons ;
+		return repository.findAll();
 	}
 	
 	public Person create(Person person) {
-		return person;
+		return repository.save(person);
 	}
 	
 	public Person update(Person person) {
-		return person;
-	}
-	
-	public void delete(String id) {}
-	
-	private Person mockPerson(int i) {
 		
-		Person person = new Person();
-		person.setId(counter.incrementAndGet());
-		person.setFirstName("Person name " + i);
-		person.setLastName("Last name " + i);
-		person.setAdress("Adress " + i);
-		person.setGender("Gender " + i);
-		return person;
+		var entity = repository.findById(person.getId())
+		.orElseThrow(() -> new ResourceNotFoundException("No records found for this ID"));
+		
+		entity.setFirstName(person.getFirstName());
+		entity.setLastName(person.getLastName());
+		entity.setAdress(person.getAdress());
+		entity.setGender(person.getGender());
+		
+		return repository.save(person);
 	}
 	
-	public Person findById(String id) {
+	public void delete(Long id) {
+		var entity = repository.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("No records found for this ID"));
+		
+		repository.delete(entity);
+	}
+	
+	
+	public Person findById(Long id) {
 		
 		logger.info("Finding one person");
 		
-		Person person = new Person();
-		person.setId(counter.incrementAndGet());
-		person.setFirstName("Matheus");
-		person.setLastName("Leal");
-		person.setAdress("Blumenau");
-		person.setGender("Masculino");
-		return person;
+		return repository.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("No records found for this ID"));
 	}
 }
